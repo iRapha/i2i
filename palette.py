@@ -75,8 +75,8 @@ def visualize_one(path, img, palette, palette_percentages, save=False):
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    base_path = 'datasets/edges2handbags/train/'
-    all_colors_file = 'summaries/color/handbags_train_files.csv'
+    base_path = 'datasets/edges2shoes/train/'
+    all_colors_file = 'summaries/color/shoes_train_files.csv'
 
     num_imgs = len(os.listdir(base_path))
 
