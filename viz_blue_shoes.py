@@ -5,23 +5,42 @@ import colorsys
 
 from shutil import copyfile
 from PIL import Image
+from img_utils import pil_to_cv2
+
+
+dataset = 'handbags' # or 'shoes'
 
 
 def get_only_blue():
-    im = np.array(Image.open('summaries/sorted/sorted_shoes_train_9.png'))
+    if dataset == 'shoes':
+        im = np.array(Image.open('summaries/sorted/sorted_shoes_train_9.png'))
+        # get only the blue px
+        im = im[1470:1545:15, :]
+        im[0,0:229] = [0, 0, 0]
+        im[-1,-492:] = [0, 0, 0]
+    else:
+        im = np.array(Image.open('summaries/sorted/sorted_handbags_train_9.png'))
+        # TODO
+        # get only the blue px
+        im = im[1470:1545:15, :]
+        im[0,0:229] = [255, 21, 0]
+        im[-1,-492:] = [255, 21, 0]
 
-    # get only the blue px
-    im = im[1470:1545:15, :]
-    im[0,0:229] = [0, 0, 0]
-    im[-1,-492:] = [0, 0, 0]
+    cv2.namedWindow('blue', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('blue', 1000, 1000)
+    cv2.imshow('blue', pil_to_cv2(im))
 
-    onlyblue = []
-    for row in range(im.shape[0]):
-        for col in range(im.shape[1]):
-            if all(im[row, col] == [0, 0, 0]):
-                continue
-            onlyblue.append(list(im[row, col]))
-    return onlyblue # shape should be (9929, 3)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    raise Exception
+
+    #  onlyblue = []
+    #  for row in range(im.shape[0]):
+        #  for col in range(im.shape[1]):
+            #  if all(im[row, col] == [0, 0, 0]):
+                #  continue
+            #  onlyblue.append(list(im[row, col]))
+    #  return onlyblue # shape should be (9929, 3)
 
 def sort_by_var(onlyblue, saveimg=False):
     # SORT BY VARIANCE
@@ -95,10 +114,10 @@ def get_blue_filenames_fromfolder(threshhold=0.0):
 
 if __name__ == '__main__':
     onlyblue = get_only_blue()
-    onlyblue = sort_by_var(onlyblue)[int(0.6*len(onlyblue)):]
+    #  onlyblue = sort_by_var(onlyblue)[int(0.6*len(onlyblue)):]
     # cp_into_folder(onlyblue)
-    # filenames = get_blue_filenames(onlyblue, threshhold=0.05)
-    filenames = get_blue_filenames_fromfolder(threshhold=0.05)
-    with open('summaries/color/blueshoes.csv', 'w') as f:
-        for filename in filenames:
-            f.write(filename + '\n')
+    #  filenames = get_blue_filenames(onlyblue, threshhold=0.05)
+    #  filenames = get_blue_filenames_fromfolder(threshhold=0.05)
+    #  with open('summaries/color/blueshoes.csv', 'w') as f:
+        #  for filename in filenames:
+            #  f.write(filename + '\n')
