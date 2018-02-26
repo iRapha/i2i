@@ -76,7 +76,7 @@ def visualize_one(path, img, palette, palette_percentages, save=False):
 
 if __name__ == '__main__':
     base_path = 'datasets/edges2handbags/train/'
-    all_colors_file = 'summaries/color/handbags_train.csv'
+    all_colors_file = 'summaries/color/handbags_train_files.csv'
 
     num_imgs = len(os.listdir(base_path))
 
@@ -89,5 +89,5 @@ if __name__ == '__main__':
             palette = get_palette(img, color_count=6)
             palette_percentages = get_palette_percentages(img, palette)
             for color, weight in zip(palette, palette_percentages):
-                f.write('{}, {}, {}, {}\n'.format(*color, weight))
+                f.write('{}, {}, {}, {}, {}\n'.format(*color, weight, path))
         print('') # new line

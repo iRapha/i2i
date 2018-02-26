@@ -4,8 +4,10 @@ import numpy as np
 from PIL import Image
 
 
-# LOAD ALL PALETTE PIXELS
 dataset = 'handbags_train'
+
+
+# LOAD ALL PALETTE PIXELS
 with open('summaries/color/{}.csv'.format(dataset), 'r') as f:
     csv = f.read().split('\n')
     N = len(csv) - 1 # Number of items.
@@ -27,22 +29,25 @@ def step (r,g,b, repetitions=1):
     v2 = int(v * repetitions)
 
     return (h2, lum, v2)
-all_ex.sort(key=lambda rgb: step(rgb[0], rgb[1], rgb[2], 8))
 
-# VISUALIZE
-num_ex = len(all_ex)
+for reps in range(1, 17):
+    print('reps: {}'.format(reps))
+    all_ex.sort(key=lambda rgb: step(rgb[0], rgb[1], rgb[2], reps))
 
-px_height = 15
-height = int(np.ceil(np.sqrt(num_ex/px_height)))
-width = height * px_height
+    # VISUALIZE
+    num_ex = len(all_ex)
 
-sprite = np.zeros((height * px_height, width, 3), np.uint8)
+    px_height = 15
+    height = int(np.ceil(np.sqrt(num_ex/px_height)))
+    width = height * px_height
 
-for i, pixels in enumerate(all_ex):
-    x = i % width
-    y = (i // width) * px_height
+    sprite = np.zeros((height * px_height, width, 3), np.uint8)
 
-    sprite[y:y+px_height, x, :] = pixels
+    for i, pixels in enumerate(all_ex):
+        x = i % width
+        y = (i // width) * px_height
 
-im = Image.fromarray(sprite)
-im.save('summaries/sorted/sorted_{}.png'.format(dataset))
+        sprite[y:y+px_height, x, :] = pixels
+
+    im = Image.fromarray(sprite)
+    im.save('summaries/sorted/sorted_{}_{}.png'.format(dataset, reps))
