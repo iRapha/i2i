@@ -20,27 +20,18 @@ def get_only_blue():
         im[-1,-492:] = [0, 0, 0]
     else:
         im = np.array(Image.open('summaries/sorted/sorted_handbags_train_9.png'))
-        # TODO
         # get only the blue px
-        im = im[1470:1545:15, :]
-        im[0,0:229] = [255, 21, 0]
-        im[-1,-492:] = [255, 21, 0]
+        im = im[2145:2385:15, :]
+        im[0,0:1019] = [0, 0, 0]
+        im[-1,-2321:] = [0, 0, 0]
 
-    cv2.namedWindow('blue', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('blue', 1000, 1000)
-    cv2.imshow('blue', pil_to_cv2(im))
-
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    raise Exception
-
-    #  onlyblue = []
-    #  for row in range(im.shape[0]):
-        #  for col in range(im.shape[1]):
-            #  if all(im[row, col] == [0, 0, 0]):
-                #  continue
-            #  onlyblue.append(list(im[row, col]))
-    #  return onlyblue # shape should be (9929, 3)
+    onlyblue = []
+    for row in range(im.shape[0]):
+        for col in range(im.shape[1]):
+            if all(im[row, col] == [0, 0, 0]):
+                continue
+            onlyblue.append(list(im[row, col]))
+    return onlyblue # shape should be (9929, 3) (if shoes)
 
 def sort_by_var(onlyblue, saveimg=False):
     # SORT BY VARIANCE
@@ -65,43 +56,69 @@ def sort_by_var(onlyblue, saveimg=False):
         sprite[y:y+px_height, x, :] = pixels
 
     im = Image.fromarray(sprite)
-    im.save('summaries/sorted/sorted_{}_byvariance.png'.format('onlyblue'))
+    if dataset == 'shoes':
+        im.save('summaries/sorted/sorted_{}_byvariance.png'.format('onlyblueshoes'))
+    else:
+        im.save('summaries/sorted/sorted_{}_byvariance.png'.format('onlybluehandbags'))
 
 def cp_into_folder(onlyblue):
     # cp all blue shoes into new folder
-    with open('summaries/color/shoes_train_files.csv', 'r') as f:
+    if dataset == 'shoes':
+        csv_filename = 'summaries/color/shoes_train_files.csv'
+    else:
+        csv_filename = 'summaries/color/handbags_train_files.csv'
+
+    onlyblue_set = set(tuple(x) for x in onlyblue)
+
+    with open(csv_filename, 'r') as f:
         lines = f.read().split('\n')
         for line in lines:
             if line is '': continue
             line_split = line.split(', ')
-            px = list(int(x) for x in line_split[0:3])
+            px = tuple(int(x) for x in line_split[0:3])
             weight = float(line_split[3])
             filename = line_split[4]
-            if px in onlyblue:
-                copyfile('datasets/edges2shoes/train/{}'.format(filename),
-                         'summaries/onlyblueshoes/{}_{}_{}'.format(np.var(px), weight, filename))
+            if px in onlyblue_set:
+                copyfile('datasets/edges2{}/train/{}'.format(dataset, filename),
+                         'summaries/onlyblue{}/{}_{}_{}'.format(handbags, np.var(px), weight, filename))
 
 def get_blue_filenames(onlyblue, threshhold=0.0):
     filenames = {}
-    with open('summaries/color/shoes_train_files.csv', 'r') as f:
-        for line in f.read().split('\n'):
+    if dataset == 'shoes':
+        csv_filename = 'summaries/color/shoes_train_files.csv'
+    else:
+        csv_filename = 'summaries/color/handbags_train_files.csv'
+
+    with open(csv_filename, 'r') as f:
+        num_lines = len(f.read().split('\n'))
+
+    onlyblue_set = set(tuple(x) for x in onlyblue)
+
+    with open(csv_filename, 'r') as f:
+        for i, line in enumerate(f.read().split('\n')):
+            if i % 10 == 0:
+                print('{}/{}'.format(i, num_lines), end='\r')
+
             if line is '': continue
+
             line_split = line.split(', ')
 
-            px = list(int(x) for x in line_split[0:3])
+            px = tuple(int(x) for x in line_split[0:3])
             weight = float(line_split[3])
             filename = line_split[4]
 
-            if px in onlyblue:
+            if px in onlyblue_set:
                 if filename not in filenames:
                     filenames[filename] = 0.0
                 filenames[filename] += weight
+        print('') # new line
 
-    return [filename for filename, weight in filenames if weight >= threshhold]
+    return [filename for filename, weight in filenames.items() if weight >= threshhold]
 
 def get_blue_filenames_fromfolder(threshhold=0.0):
+    # faster than get_blue_filenames but you must have run cp_into_folder first
     filenames = {}
-    for filename_ in os.listdir('summaries/onlyblueshoes'):
+    for filename_ in os.listdir('summaries/onlyblue{}'.format(dataset)):
         _, weight, name, ext = filename_.split('_')
         weight = float(weight)
         filename = name + '_' + ext
@@ -114,10 +131,10 @@ def get_blue_filenames_fromfolder(threshhold=0.0):
 
 if __name__ == '__main__':
     onlyblue = get_only_blue()
-    #  onlyblue = sort_by_var(onlyblue)[int(0.6*len(onlyblue)):]
+    onlyblue = sort_by_var(onlyblue)[int(0.6*len(onlyblue)):]
     # cp_into_folder(onlyblue)
-    #  filenames = get_blue_filenames(onlyblue, threshhold=0.05)
-    #  filenames = get_blue_filenames_fromfolder(threshhold=0.05)
-    #  with open('summaries/color/blueshoes.csv', 'w') as f:
-        #  for filename in filenames:
-            #  f.write(filename + '\n')
+    filenames = get_blue_filenames(onlyblue, threshhold=0.05)
+    # filenames = get_blue_filenames_fromfolder(threshhold=0.05)
+    with open('summaries/color/blue{}.csv'.format(dataset), 'w') as f:
+        for filename in filenames:
+            f.write(filename + '\n')
